@@ -5,7 +5,7 @@ def generate_chebyshev_nodes(a, b, n):
     """Generates n Chebyshev nodes over the interval [a, b]"""
     i = np.arange(n)
     
-    return (0.5*(a + b) + 0.5*(b - 1) * np.cos((i*np.pi)/(n-1)))
+    return (0.5*(a + b) + 0.5*(b - a) * np.cos((i*np.pi)/(n-1)))
 
 def monomial_interplant(f, nodes):
     """Construct a polynomial interplant of the function f using monomial basis
