@@ -6,7 +6,7 @@ def generate_chebyshev_nodes(a, b, n):
     """Generates n Chebyshev nodes over the interval [a, b]"""
     i = np.arange(n)
 
-    return 0.5 * (a + b) + 0.5 * (b - a) * np.cos((i * np.pi) / (n - 1))
+    return (0.5 * (a + b) + 0.5 * (b - a) * np.cos((i * np.pi) / (n - 1)))[::-1]
 
 
 def monomial_interplant(f, nodes):
@@ -34,29 +34,34 @@ def honer_evaluate(a, x):
     return b
 
 
-def barycentric_interpolate(f, nodes, x, chebyshev=False):
+def barycentric_interpolate(f_i, x_i, x, chebyshev=False):
+    """Constructs and evaluates a Lagrange interpolating polynomial."""
     if chebyshev:
-        weights = np.ones_like(nodes)
+        # For Chebyshev points we have an analytical formula for the weights
+        weights = np.ones_like(x_i)
         weights[0] /= 2
         weights[-1] /= 2
-        weights *= (-1) ** np.arange(len(nodes))
+        weights *= (-1) ** np.arange(len(x_i))
     else:
         # compute weights w_k=prod(x_k - x_j)
-        dist = nodes - nodes[..., np.newaxis]
+        dist = x_i - x_i[..., np.newaxis]
         np.fill_diagonal(dist, 1)
         weights = 1 / np.prod(dist, axis=1)
 
     # compute all the x - x_k terms
-    c = x - nodes[..., np.newaxis]
-    # handle the case were a point coincides with a node
+    c = x - x_i[..., np.newaxis]
+    
+    # handle the case where a point coincides with a node
     exact = c == 0
     c[np.nonzero(exact)] = 1
 
     summand = weights[..., np.newaxis] / c
 
-    p = (f(nodes) @ summand) / np.sum(summand, axis=0)
-    to_replace = np.any(exact, axis=0)
-    p[to_replace] = f(x[to_replace])
+    # Apply the second barycentric interpolation formula
+    p = (f_i @ summand) / np.sum(summand, axis=0)
+    
+    # replace any points with nodal values if needed
+    p[np.any(exact, axis=0)] = f_i[np.any(exact, axis=1)]
     return p
 
 
@@ -66,7 +71,7 @@ def main():
     f = lambda x: np.sin(x) + np.sin(x**2)
 
     interval = [0, 4]
-    n = np.logspace(2, 6, num=6, base=2, dtype=int)
+    n = np.logspace(2, 6, num=5, base=2, dtype=int)
 
     # Plot comparison
     x = np.linspace(*interval)
@@ -100,14 +105,14 @@ def main():
 
         # Lagrange Polynomial, regular grid
         err = np.linalg.norm(
-            barycentric_interpolate(f, regular_nodes, x) - f_true, np.inf
+            barycentric_interpolate(f(regular_nodes), regular_nodes, x) - f_true, np.inf
         )
 
         lagrange_regular_nodes_err.append(err)
 
         # Lagrange Polynomial, chebyshev grid
         err = np.linalg.norm(
-            barycentric_interpolate(f, chebyshev_nodes, x, chebyshev=True) - f_true,
+            barycentric_interpolate(f(chebyshev_nodes), chebyshev_nodes, x, chebyshev=True) - f_true,
             np.inf,
         )
 
@@ -144,6 +149,11 @@ def main():
     ax.set_xlabel("n")
     ax.set_ylabel("Maximum Error")
     plt.show()
+    
+    # The monomial basis function with both regular and chebyshev points converges as
+    # n increases. For the Lagrange polynomial as n increases the Runge phenomenon and
+    # error diverges. The Lagrange polynomial with Chebyshev points converges and at
+    # a faster rate than the monomial interplant.
 
     # Plot condition number of the Vandermonde matrix for the monomial interplant
     # against the number of nodes
