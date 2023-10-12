@@ -34,8 +34,13 @@ def honer_evaluate(a, x):
     return b
 
 
-def barycentric_interpolate(f, nodes, x, weights=None):
-    if weights is None:
+def barycentric_interpolate(f, nodes, x, chebyshev=False):
+    if chebyshev:
+        weights = np.ones_like(nodes)
+        weights[0] /= 2
+        weights[-1] /= 2
+        weights *= (-1) ** np.arange(len(nodes))
+    else:
         # compute weights w_k=prod(x_k - x_j)
         dist = nodes - nodes[..., np.newaxis]
         np.fill_diagonal(dist, 1)
@@ -43,21 +48,16 @@ def barycentric_interpolate(f, nodes, x, weights=None):
 
     # compute all the x - x_k terms
     c = x - nodes[..., np.newaxis]
-    exact = np.nonzero(c == 0)
-    c[exact] = 1
+    # handle the case were a point coincides with a node
+    exact = c == 0
+    c[np.nonzero(exact)] = 1
 
     summand = weights[..., np.newaxis] / c
 
-    p = np.dot(f(nodes), summand) / np.sum(summand, axis=-1)[..., np.newaxis]
+    p = (f(nodes) @ summand) / np.sum(summand, axis=0)
+    to_replace = np.any(exact, axis=0)
+    p[to_replace] = f(x[to_replace])
     return p
-
-
-def barycentric_chebyshev_weights(n):
-    k = np.arange(n)
-    w = (-1) ** k * 2 ** (n - 1) / n
-    w[0] /= 2
-    w[-1] /= 2
-    return w
 
 
 def main():
@@ -66,7 +66,7 @@ def main():
     f = lambda x: np.sin(x) + np.sin(x**2)
 
     interval = [0, 4]
-    n = np.logspace(2, 6, num=5, base=2, dtype=int)
+    n = np.logspace(2, 6, num=6, base=2, dtype=int)
 
     # Plot comparison
     x = np.linspace(*interval)
@@ -106,9 +106,8 @@ def main():
         lagrange_regular_nodes_err.append(err)
 
         # Lagrange Polynomial, chebyshev grid
-        weights = barycentric_chebyshev_weights(n_i)
         err = np.linalg.norm(
-            barycentric_interpolate(f, regular_nodes, x, weights=weights) - f_true,
+            barycentric_interpolate(f, chebyshev_nodes, x, chebyshev=True) - f_true,
             np.inf,
         )
 
