@@ -9,8 +9,8 @@ def generate_chebyshev_nodes(a, b, n):
     return (0.5 * (a + b) + 0.5 * (b - a) * np.cos((i * np.pi) / (n - 1)))[::-1]
 
 
-def monomial_interplant(f, nodes):
-    """Construct a polynomial interplant of the function f using monomial basis
+def monomial_interpolant(f, nodes):
+    """Construct a polynomial interpolant of the function f using monomial basis
     functions by sampling from f at the points given by nodes.
 
     Returns the coefficients of the polynomial and the condition number of the
@@ -50,7 +50,7 @@ def barycentric_interpolate(f_i, x_i, x, chebyshev=False):
 
     # compute all the x - x_k terms
     c = x - x_i[..., np.newaxis]
-    
+
     # handle the case where a point coincides with a node
     exact = c == 0
     c[np.nonzero(exact)] = 1
@@ -59,10 +59,22 @@ def barycentric_interpolate(f_i, x_i, x, chebyshev=False):
 
     # Apply the second barycentric interpolation formula
     p = (f_i @ summand) / np.sum(summand, axis=0)
-    
+
     # replace any points with nodal values if needed
     p[np.any(exact, axis=0)] = f_i[np.any(exact, axis=1)]
     return p
+
+
+def linear_spline_interpolate(f_i, x_i, x):
+    """Compute and evaluate a linear spline interpolant"""
+    if np.any(x < np.amin(x_i)) or np.any(x > np.amax(x_i)):
+        raise ValueError("Cannot extrapolate")
+
+    i = np.searchsorted(x_i, x)
+
+    return ((x_i[i] - x) / (x_i[i] - x_i[i - 1])) * f_i[i - 1] + (
+        (x - x_i[i - 1]) / (x_i[i] - x_i[i - 1])
+    ) * f_i[i]
 
 
 def main():
@@ -74,7 +86,7 @@ def main():
     n = np.logspace(2, 6, num=5, base=2, dtype=int)
 
     # Plot comparison
-    x = np.linspace(*interval)
+    x = np.linspace(*interval, num=1000)
     f_true = f(x)
 
     monomial_regular_nodes_err = []
@@ -90,14 +102,14 @@ def main():
         chebyshev_nodes = generate_chebyshev_nodes(*interval, n_i)
 
         # Monomial basis, regular grid
-        a, nu = monomial_interplant(f, regular_nodes)
+        a, nu = monomial_interpolant(f, regular_nodes)
         err = np.linalg.norm(honer_evaluate(a, x) - f_true, np.inf)
 
         monomial_regular_nodes_err.append(err)
         monomial_regular_nodes_condition_number.append(nu)
 
         # Monomial basis, chebyshev grid
-        a, nu = monomial_interplant(f, chebyshev_nodes)
+        a, nu = monomial_interpolant(f, chebyshev_nodes)
         err = np.linalg.norm(honer_evaluate(a, x) - f_true, np.inf)
 
         monomial_chebyshev_nodes_err.append(err)
@@ -112,7 +124,10 @@ def main():
 
         # Lagrange Polynomial, chebyshev grid
         err = np.linalg.norm(
-            barycentric_interpolate(f(chebyshev_nodes), chebyshev_nodes, x, chebyshev=True) - f_true,
+            barycentric_interpolate(
+                f(chebyshev_nodes), chebyshev_nodes, x, chebyshev=True
+            )
+            - f_true,
             np.inf,
         )
 
@@ -148,8 +163,9 @@ def main():
     ax.legend()
     ax.set_xlabel("n")
     ax.set_ylabel("Maximum Error")
+    ax.set_title("Q1: Error Plot")
     plt.show()
-    
+
     # The monomial basis function with both regular and chebyshev points converges as
     # n increases. For the Lagrange polynomial as n increases the Runge phenomenon and
     # error diverges. The Lagrange polynomial with Chebyshev points converges and at
@@ -174,9 +190,35 @@ def main():
     ax.legend()
     ax.set_xlabel("n")
     ax.set_ylabel("Condition number")
+    ax.set_title("Q1: Condition Number Plot")
     plt.show()
 
     # We see that the condition number gets very large!!
+
+    # Question 2
+    n = np.logspace(2, 7, num=6, base=2, dtype=int)
+
+    linear_spline_err = []
+
+    for n_i in n:
+        xi = np.linspace(*interval, num=n_i)
+        f_i = f(xi)
+
+        err = np.linalg.norm(linear_spline_interpolate(f_i, xi, x) - f_true, np.inf)
+        linear_spline_err.append(err)
+
+    fig, ax = plt.subplots()
+    ax.plot(n, linear_spline_err, label="Linear Spline")
+    ax.set_yscale("log")
+    ax.legend()
+    ax.set_xlabel("n")
+    ax.set_ylabel("Maximum Error")
+    ax.set_title("Q2: Error Plot")
+    plt.show()
+
+    # As expected the error decreases with more points
+    
+    # Question 3
 
 
 if __name__ == "__main__":
