@@ -85,7 +85,6 @@ def main():
     interval = [0, 4]
     n = np.logspace(2, 6, num=5, base=2, dtype=int)
 
-    # Plot comparison
     x = np.linspace(*interval, num=1000)
     f_true = f(x)
 
@@ -217,8 +216,33 @@ def main():
     plt.show()
 
     # As expected the error decreases with more points
-    
+
     # Question 3
+
+    g = lambda x: np.abs(x - 1 / 3)
+    g_true = g(x)
+
+    linear_spline_err_g = []
+
+    for n_i in n:
+        xi = np.linspace(*interval, num=n_i)
+        g_i = g(xi)
+
+        err = np.linalg.norm(linear_spline_interpolate(g_i, xi, x) - g_true, np.inf)
+        linear_spline_err_g.append(err)
+
+    fig, ax = plt.subplots()
+    ax.plot(n, linear_spline_err_g, label="Linear Spline")
+    ax.set_yscale("log")
+    ax.legend()
+    ax.set_xlabel("n")
+    ax.set_ylabel("Maximum Error")
+    ax.set_title("Q3: Error Plot")
+    plt.show()
+
+    # Here the error stops decreases very slowly as the interpolating function struggles
+    # capture the sharp corner in g. There would need to be a node at x=1/3 to approximate
+    # this function better.
 
 
 if __name__ == "__main__":
