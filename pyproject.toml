@@ -1,0 +1,13 @@
+[project]
+name = "pna"
+version = "0.1.0"
+readme = "README.md"
+requires-python = ">=3.7"
+authors = [
+    { name = "Jake Bowhay", email = "bowhay@maths.ox.ac.uk" }
+]
+dependencies = [
+    "numpy",
+    "scipy",
+    "matplotlib"
+]
