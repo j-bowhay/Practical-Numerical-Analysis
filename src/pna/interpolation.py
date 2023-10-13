@@ -77,37 +77,28 @@ def linear_spline_interpolate(f_i, x_i, x):
         (x - x_i[i - 1]) / (x_i[i] - x_i[i - 1])
     ) * f_i[i]
 
+
 def natural_cubic_spline_interpolation(f_i, x_i, x):
     h = np.diff(x_i)
     # solve tridiagonal system for system
-    diags = [h[0:-2], 2*(h[1:] + h[:-1]), h[0:-2]]
-    A = scipy.sparse.diags(diags, [-1, 0, 1], format='csc')
-    bi = (f_i[1:]-f_i[:-1])/h
-    u = 6*(bi[1:] - bi[:-1])
-    
+    diags = [h[0:-2], 2 * (h[1:] + h[:-1]), h[0:-2]]
+    A = scipy.sparse.diags(diags, [-1, 0, 1], format="csc")
+    bi = (f_i[1:] - f_i[:-1]) / h
+    u = 6 * (bi[1:] - bi[:-1])
+
     sigma = scipy.sparse.linalg.spsolve(A, u)
-    sigma = np.concatenate([[0.], sigma, [0.]])
+    sigma = np.concatenate([[0.0], sigma, [0.0]])
 
     i = np.searchsorted(x_i, x)
-    
-    S = sigma[i] / (6 * h[i-1]) * (x - x_i[i-1]) ** 3
-    S = S + sigma[i-1] / (6 * h[i-1]) * (x_i[i] - x) ** 3
-    S = S + (f_i[i] / h[i-1] - sigma[i] * h[i-1] / 6) * (x - x_i[i-1])
-    S = S + (f_i[i-1] / h[i-1] - sigma[i-1] * h[i-1] / 6) * (x_i[i] - x)
-    
-    return S
 
+    a = sigma[i - 1] / (6 * h[i - 1])
+    b = sigma[i] / (6 * h[i - 1])
+    alpha = f_i[i] / h[i - 1] - sigma[i] * h[i - 1] / 6
+    beta = f_i[i - 1] / h[i - 1] - sigma[i - 1] * h[i - 1] / 6
 
-def main():
-    h = lambda x: np.sin(np.pi*x)
-    interval = [0, 4]
-    x = np.linspace(*interval, num=1000)
-    regular_nodes = np.linspace(*interval, num=12)
-    plt.plot(x, h(x))
-    plt.plot(x, natural_cubic_spline_interpolation(h(regular_nodes), regular_nodes, x))
-    plt.show()    
-
-
-
-if __name__ == "__main__":
-    main()
+    return (
+        a * (x_i[i] - x) ** 3
+        + b * (x - x_i[i - 1]) ** 3
+        + alpha * (x - x_i[i - 1])
+        + beta * (x_i[i] - x)
+    )
