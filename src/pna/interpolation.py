@@ -73,14 +73,17 @@ def linear_spline_interpolate(f_i, x_i, x):
 
     i = np.searchsorted(x_i, x)
 
+    # evaluate linear interpolation between points
     return ((x_i[i] - x) / (x_i[i] - x_i[i - 1])) * f_i[i - 1] + (
         (x - x_i[i - 1]) / (x_i[i] - x_i[i - 1])
     ) * f_i[i]
 
 
 def natural_cubic_spline_interpolation(f_i, x_i, x):
+    """Constructs and evaluates a natural cubic spline for data f_i at
+    knots x_i at x."""
     h = np.diff(x_i)
-    # solve tridiagonal system for system
+    # construct tridiagonal matrix for system
     diags = [h[0:-2], 2 * (h[1:] + h[:-1]), h[0:-2]]
     A = scipy.sparse.diags(diags, [-1, 0, 1], format="csc")
     bi = (f_i[1:] - f_i[:-1]) / h
@@ -91,6 +94,7 @@ def natural_cubic_spline_interpolation(f_i, x_i, x):
 
     i = np.searchsorted(x_i, x)
 
+    # construct polynomial
     a = sigma[i - 1] / (6 * h[i - 1])
     b = sigma[i] / (6 * h[i - 1])
     alpha = f_i[i] / h[i - 1] - sigma[i] * h[i - 1] / 6
