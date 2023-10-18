@@ -67,13 +67,7 @@ def illinois(f, a, b, tol):
 def newton_raphson(f, f_prime, x0, tol):
     k = 0
     x = x0
-    while abs(x) > tol:
+    while abs(f(x)) > tol:
         x -= f(x) / f_prime(x)
         k += 1
     return x, k
-
-import numpy as np
-
-f = lambda x: np.sin(x) + np.sin(x**2)
-bracket = (-0.5,0.5)
-x_star, iterations =  regula_falsi(f, *bracket, 1e-3)
