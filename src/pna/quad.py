@@ -28,8 +28,4 @@ def guass_legendre(f, a, b, n):
     T = scipy.sparse.diags([beta, beta], [1, -1]).toarray()
     w, v = np.linalg.eig(T)
     i = np.argsort(w)
-    return 2 * v[0, i] ** 2 @ f(w[i])
-
-
-print(clenshaw_curtis(lambda x: x**2, -1, 1, 10))
-print(guass_legendre(lambda x: x**2, 0, 1, 10))
+    return (b-a) * v[0, i] ** 2 @ f(0.5*(b-a)*w[i] + 0.5*(b+a))
