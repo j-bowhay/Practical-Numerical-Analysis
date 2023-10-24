@@ -4,7 +4,7 @@ def bisect(f, a, b, tol):
         count += 1
         c = 0.5 * (a + b)
         f_c = f(c)
-        if abs(f_c) < tol:
+        if f_c == 0:
             break
         elif f(a) * f(c) < 0:
             b = c
@@ -21,7 +21,7 @@ def regula_falsi(f, a, b, tol):
         c = (a * f_b - b * f_a) / (f_b - f_a)
         f_c = f(c)
         count += 1
-        if abs(f_c) < tol:
+        if f_c == 0:
             break
         elif f_a * f_c < 0:
             b = c
@@ -45,7 +45,7 @@ def illinois(f, a, b, tol):
         c = (a * f_b - b * f_a) / (f_b - f_a)
         f_c = f(c)
         count += 1
-        if abs(f_c) < tol:
+        if f_c == 0:
             break
         elif f_a * f(c) < 0:
             b = c
