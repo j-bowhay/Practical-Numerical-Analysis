@@ -1,6 +1,10 @@
+import math
+
+
 def bisect(f, a, b, tol):
     count = 0
-    while abs(b - a) > tol:
+    f_c = math.inf
+    while abs(f_c) > tol:
         count += 1
         c = 0.5 * (a + b)
         f_c = f(c)
@@ -15,7 +19,8 @@ def bisect(f, a, b, tol):
 
 def regula_falsi(f, a, b, tol):
     count = 0
-    while abs(b - a) > tol:
+    f_c = math.inf
+    while abs(f_c) > tol:
         f_a = f(a)
         f_b = f(b)
         c = (a * f_b - b * f_a) / (f_b - f_a)
@@ -34,7 +39,8 @@ def illinois(f, a, b, tol):
     count = 0
     right = True
     count = 0
-    while abs(b - a) > tol:
+    f_c = math.inf
+    while abs(f_c) > tol:
         f_a = f(a)
         f_b = f(b)
         if count > 1:

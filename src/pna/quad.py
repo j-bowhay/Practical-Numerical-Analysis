@@ -24,8 +24,8 @@ def clenshaw_curtis(f, a, b, n):
 
 
 def guass_legendre(f, a, b, n):
-    beta = 0.5 / np.sqrt(1 - (2 * np.arange(1, n + 1, dtype=float)) ** (-2))
-    T = scipy.sparse.diags([beta, beta], [1, -1]).toarray()
-    w, v = np.linalg.eig(T)
-    i = np.argsort(w)
-    return (b-a) * v[0, i] ** 2 @ f(0.5*(b-a)*w[i] + 0.5*(b+a))
+    gamma = 0.5 / np.sqrt(1 - (2 * np.arange(1, n + 1, dtype=float)) ** (-2))
+    T = scipy.sparse.diags([gamma, gamma], [1, -1]).toarray()
+    eigenvalues, eigenvectors = np.linalg.eigh(T)
+    w = 2 * eigenvectors[0, :] ** 2
+    return 0.5 * (b - a) * w @ f(0.5 * (b - a) * eigenvalues + 0.5 * (a + b))
