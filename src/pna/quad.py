@@ -10,13 +10,22 @@ def composite_trapezium(f, a, b, n):
 
 
 def clenshaw_curtis(f, a, b, n):
+    # Generate Chebyshev spaced points
     x = 0.5 * ((b - a) * np.cos(np.pi * np.arange(0, n + 1) / n) + (b + a))
+
+    # Evaluate function at Chebyshev points
     fx = f(x) / (2 * n)
+
+    # Compute weights
     g = np.real(np.fft.fft(np.concatenate([fx, fx[-2:0:-1]])))
     w = np.concatenate([[g[0]], g[1 : n - 1] + g[-1 : n + 1 : -1], [g[-1]]])
-    c = np.zeros_like(w)
-    c[::2] = 2 / (1 - np.arange(0, n, 2) ** 2)
-    return 0.5 * (b - a) * c @ w
+
+    # Compute integral of Chebyshev basis over [-1,1]
+    I = np.zeros_like(w)
+    # Only even terms are non-zero
+    I[::2] = 2 / (1 - np.arange(0, n, 2) ** 2)
+
+    return 0.5 * (b - a) * I @ w
 
 
 def guass_legendre(f, a, b, n):
@@ -36,7 +45,7 @@ def adaptive_composite_trapezium(f, a, b, n0, tol):
 
     while True:
         # note it really should be max|f''| however here we just use f''(\bar{x})
-        # where
+        # where f'' is computed using a centred difference
         # if the intervals are small hopefully this isn't a terrible approximation
         error_summand = (
             np.diff(x) ** 3

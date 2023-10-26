@@ -1,4 +1,5 @@
 import math
+import numpy as np
 
 
 def bisect(f, a, b, tol):
@@ -77,3 +78,13 @@ def newton_raphson(f, f_prime, x0, tol):
         x -= f(x) / f_prime(x)
         k += 1
     return x, k
+
+
+def poly_roots(a):
+    """Compute roots of polynomial. Coeffs should be given in order a_n to a_0"""
+    n = len(a) - 1
+    C = np.zeros((n, n))
+    sub_diag = C.reshape(-1)[n :: n + 1]
+    sub_diag[...] = 1
+    C[:, -1] -= a[:-1] / a[-1]
+    return np.linalg.eigvals(C)
