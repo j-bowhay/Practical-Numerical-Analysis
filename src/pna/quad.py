@@ -10,17 +10,13 @@ def composite_trapezium(f, a, b, n):
 
 
 def clenshaw_curtis(f, a, b, n):
-    #  Chebyshev points
-    x = np.cos(np.pi * np.arange(0, n + 1) / n)
-    # f evaluated at these points
-    fx = f(0.5 * (b - a) * x + 0.5 * (a + b)) / (2 * n)
+    x = 0.5 * ((b - a) * np.cos(np.pi * np.arange(0, n + 1) / n) + (b + a))
+    fx = f(x) / (2 * n)
     g = np.real(np.fft.fft(np.concatenate([fx, fx[-2:0:-1]])))
-    # Chebyshev coefficients
-    a = np.concatenate([[g[0]], g[1 : n - 1] + g[-1 : n + 1 : -1], [g[-1]]])
-    # weight vector
-    w = np.zeros_like(a)
-    w[::2] = 2 / (1 - np.arange(0, n, 2) ** 2)
-    return 0.5 * (b - a) * w @ a
+    w = np.concatenate([[g[0]], g[1 : n - 1] + g[-1 : n + 1 : -1], [g[-1]]])
+    c = np.zeros_like(w)
+    c[::2] = 2 / (1 - np.arange(0, n, 2) ** 2)
+    return 0.5 * (b - a) * c @ w
 
 
 def guass_legendre(f, a, b, n):
