@@ -30,7 +30,7 @@ def clenshaw_curtis(f, a, b, n):
 
 def guass_legendre(f, a, b, n):
     gamma = 0.5 / np.sqrt(1 - (2 * np.arange(1, n + 1, dtype=float)) ** (-2))
-    T = scipy.sparse.diags([gamma, gamma], [1, -1]).toarray()
+    T = np.diag(gamma, -1) + np.diag(gamma, 1)
     eigenvalues, eigenvectors = np.linalg.eigh(T)
     w = 2 * eigenvectors[0, :] ** 2
     return 0.5 * (b - a) * w @ f(0.5 * (b - a) * eigenvalues + 0.5 * (a + b))
@@ -55,6 +55,8 @@ def adaptive_composite_trapezium(f, a, b, n0, tol):
         err = np.sum(error_summand)
         if err < tol:
             break
+
+        # find interval with greatest contribution to error and split interval
         i = np.argmax(error_summand)
         x = np.insert(x, i + 1, 0.5 * (x[i] + x[i + 1]))
 
